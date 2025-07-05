@@ -72,7 +72,7 @@ def main():
         log_file
     )
 
-    # Find known result BED
+    # Find result BED
     result_bed = None
     for f in os.listdir(mirdeep_out):
         if f.startswith("result_") and f.endswith(".bed"):
@@ -100,25 +100,12 @@ def main():
         log_file
     )
 
-    # Step 12: miRDeep2 (novel)
-    run_command(
-        f"cd \"{novel_out}\" && miRDeep2.pl \"{new_lapse_fa}\" \"{cleaned_fasta}\" \"{mapped_arf}\" none none none",
-        log_file
-    )
-
-    # Find novel result BED
-    result_bed_novel = None
-    for f in os.listdir(novel_out):
-        if f.startswith("result_") and f.endswith(".bed"):
-            result_bed_novel = os.path.join(novel_out, f)
-            break
-    if not result_bed_novel:
-        raise FileNotFoundError("miRDeep2 result BED file (novel) not found")
-
+    # Step 12: Find novel result BED
+    
     novel_bed = os.path.join(novel_out, "novel_mirna.bed")
     novel_gff = os.path.join(novel_out, "novel_mirna.gff")
     run_command(
-        f"awk '$5 >= 4' \"{result_bed_novel}\" > \"{novel_bed}\"",
+        f"awk '$4 ~ /^novel:/ && $5 >= 4' \"{result_bed}\" > \"{novel_bed}\"",
         log_file
     )
     run_command(
@@ -126,14 +113,14 @@ def main():
         log_file
     )
 
-    # featureCounts for novel miRNAs
+    # Step 11: featureCounts for novel miRNAs
     run_command(
-        f"featureCounts -T {threads} -t mirna_transcript -g ID -o \"{novel_out}/counts_novel.txt\" "
+        f"featureCounts -T {threads} -t mirna_transcript -g ID -o \"{novel_out}/counts_known.txt\" "
         f"-a \"{novel_gff}\" \"{bam_folder}\"/*.bam",
         log_file
     )
+    
 
 
 if __name__ == "__main__":
     main()
-
