@@ -125,13 +125,28 @@ def main():
 
 
 
-    # Step 9: Collapse FASTQ reads
-    all_fastq_path = os.path.join(align_folder, "all_merged.fastq")
-    run_command(f"cat {' '.join(fastq_list)} > {all_fastq_path}", log_file)
+    # Step 9: Convert BAM to FASTQ and collapse reads
+    fastq_from_bam_list = []
 
+    for bam_file in sorted(os.listdir(align_folder)):
+        if bam_file.endswith("_sorted.bam"):
+            sample = bam_file.replace("_sorted.bam", "")
+            bam_path = os.path.join(align_folder, bam_file)
+            fq_from_bam = os.path.join(align_folder, f"{sample}.from_bam.fastq")
+            
+            # Convert BAM to FASTQ
+            run_command(f"samtools fastq {bam_path} > {fq_from_bam}", log_file)
+            fastq_from_bam_list.append(fq_from_bam)
+
+    # Merge FASTQ files from BAM
+    all_fastq_path = os.path.join(align_folder, "all_merged_from_bam.fastq")
+    run_command(f"cat {' '.join(fastq_from_bam_list)} > {all_fastq_path}", log_file)
+
+    # Collapse merged FASTQ
     collapsed_fa = os.path.join(collapse_folder, "collapsed.fa")
     run_command(f"fastx_collapser -Q33 -i {all_fastq_path} -o {collapsed_fa}", log_file)
 
+    # Rename and filter collapsed FASTA
     renamed_fa = os.path.join(collapse_folder, "new_lapse.fasta")
     run_command(f"sed 's/>/>seq_/g' {collapsed_fa} | sed 's/-/_x/g' > {renamed_fa}", log_file)
 
@@ -141,4 +156,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
