@@ -115,7 +115,7 @@ def main():
 
     # Step 11: featureCounts for novel miRNAs
     run_command(
-        f"featureCounts -T {threads} -t mirna_transcript -g ID -o \"{novel_out}/counts_known.txt\" "
+        f"featureCounts -T {threads} -t mirna_transcript -g ID -o \"{novel_out}/counts_novel.txt\" "
         f"-a \"{novel_gff}\" \"{bam_folder}\"/*.bam",
         log_file
     )
